@@ -76,8 +76,6 @@ function EditForm({ initialValues, onSubmit, onCancel }) {
 
 const KanbanItem = (props) => {
   const { item, columnId, setColumns } = props;
-
-  const [values, setValues] = useState({ text: item.text });
   const [opened, setOpened] = useState(false);
 
   return (
@@ -94,15 +92,26 @@ const KanbanItem = (props) => {
           shadow="sm"
           onClick={() => setOpened((o) => !o)}
         >
-          {values.text}
+          {item.text}
         </Paper>
       }
     >
       <EditForm
-        initialValues={values}
+        initialValues={{ text: item.text }}
         onSubmit={(data) => {
-          setValues(data);
           setOpened(false);
+          setColumns((prevColumns) =>
+            prevColumns.map((column) =>
+              column.id === columnId
+                ? {
+                    ...column,
+                    items: column.items.map((i) =>
+                      i.id === item.id ? { ...i, text: data.text } : i
+                    ),
+                  }
+                : column
+            )
+          );
         }}
       />
     </Popover>

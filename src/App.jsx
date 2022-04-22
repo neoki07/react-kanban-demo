@@ -156,7 +156,7 @@ const AddButton = (props) => {
       position="bottom"
       transition="scale-y"
       target={
-        <div className="flex justify-center m-2">
+        <div className="m-2 flex justify-center">
           <ActionIcon
             className="hover:bg-gray-100"
             radius={10}
@@ -194,7 +194,7 @@ const AddButton = (props) => {
 
 const App = () => {
   const [columns, setColumns] = useState(initialColumns);
-  const [nextItemId, setNextItemId] = useState(initialColumns.length);
+  const [nextItemId, setNextItemId] = useState(initialColumns.length + 1);
 
   return (
     <div className="m-12">

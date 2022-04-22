@@ -4,15 +4,16 @@ import {
   Divider,
   Badge,
   TextInput,
+  Text,
   Popover,
   Group,
   Button,
   Paper,
   ActionIcon,
 } from "@mantine/core";
-import { useForm } from "@mantine/hooks";
+import { useForm, useHover } from "@mantine/hooks";
 import { useState } from "react";
-import { Plus } from "tabler-icons-react";
+import { Plus, X } from "tabler-icons-react";
 
 const initialColumns = [
   {
@@ -79,6 +80,7 @@ function EditForm({ initialValues, onSubmit, onCancel }) {
 const KanbanItem = (props) => {
   const { item, columnId, setColumns } = props;
   const [opened, setOpened] = useState(false);
+  const { hovered, ref } = useHover();
 
   return (
     <Popover
@@ -89,12 +91,35 @@ const KanbanItem = (props) => {
       transition="scale-y"
       target={
         <Paper
-          className="m-1 break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
+          className="relative m-1 break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
           radius="sm"
           shadow="sm"
           onClick={() => setOpened((o) => !o)}
+          ref={ref}
         >
-          {item.text}
+          <Text>{item.text}</Text>
+          {hovered && (
+            <div className="absolute top-0 left-0 flex h-full w-full justify-end p-1">
+              <ActionIcon
+                className="h-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setColumns((prevColumns) =>
+                    prevColumns.map((column) =>
+                      column.id === columnId
+                        ? {
+                            ...column,
+                            items: column.items.filter((i) => i.id !== item.id),
+                          }
+                        : column
+                    )
+                  );
+                }}
+              >
+                <X size={14} />
+              </ActionIcon>
+            </div>
+          )}
         </Paper>
       }
     >

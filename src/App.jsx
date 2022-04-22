@@ -8,9 +8,11 @@ import {
   Group,
   Button,
   Paper,
+  ActionIcon,
 } from "@mantine/core";
 import { useForm } from "@mantine/hooks";
 import { useState } from "react";
+import { Plus } from "tabler-icons-react";
 
 const initialColumns = [
   {
@@ -118,8 +120,52 @@ const KanbanItem = (props) => {
   );
 };
 
+const AddButton = (props) => {
+  const { columnId, setColumns, nextItemId, setNextItemId } = props;
+  const [opened, setOpened] = useState(false);
+
+  return (
+    <Popover
+      className="w-full"
+      opened={opened}
+      onClose={() => setOpened(false)}
+      position="bottom"
+      transition="scale-y"
+      target={
+        <div className="flex justify-center">
+          <ActionIcon onClick={() => setOpened((o) => !o)}>
+            <Plus size={20} />
+          </ActionIcon>
+        </div>
+      }
+    >
+      <EditForm
+        initialValues={{ text: "" }}
+        onSubmit={(data) => {
+          setNextItemId((id) => id + 1);
+          setOpened(false);
+          setColumns((prevColumns) =>
+            prevColumns.map((column) =>
+              column.id === columnId
+                ? {
+                    ...column,
+                    items: [
+                      ...column.items,
+                      { id: nextItemId, text: data.text },
+                    ],
+                  }
+                : column
+            )
+          );
+        }}
+      />
+    </Popover>
+  );
+};
+
 const App = () => {
   const [columns, setColumns] = useState(initialColumns);
+  const [nextItemId, setNextItemId] = useState(initialColumns.length);
 
   return (
     <div className="m-12">
@@ -145,6 +191,12 @@ const App = () => {
                 />
               ))}
             </Card>
+            <AddButton
+              columnId={column.id}
+              setColumns={setColumns}
+              nextItemId={nextItemId}
+              setNextItemId={setNextItemId}
+            />
           </Grid.Col>
         ))}
       </Grid>

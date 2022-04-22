@@ -93,15 +93,14 @@ const KanbanItem = (props) => {
         <Paper
           className="relative m-1 break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
           radius="sm"
-          shadow="sm"
           onClick={() => setOpened((o) => !o)}
           ref={ref}
         >
           <Text>{item.text}</Text>
           {hovered && (
-            <div className="absolute top-0 left-0 flex h-full w-full justify-end p-1">
+            <div className="absolute top-0 left-0 flex h-full w-full justify-end p-0">
               <ActionIcon
-                className="h-full"
+                className="h-full bg-gray-100 hover:bg-gray-200"
                 onClick={(e) => {
                   e.stopPropagation();
                   setColumns((prevColumns) =>
@@ -157,8 +156,13 @@ const AddButton = (props) => {
       position="bottom"
       transition="scale-y"
       target={
-        <div className="flex justify-center">
-          <ActionIcon onClick={() => setOpened((o) => !o)}>
+        <div className="flex justify-center m-2">
+          <ActionIcon
+            className="hover:bg-gray-100"
+            radius={10}
+            size={40}
+            onClick={() => setOpened((o) => !o)}
+          >
             <Plus size={20} />
           </ActionIcon>
         </div>
@@ -215,13 +219,13 @@ const App = () => {
                   setColumns={setColumns}
                 />
               ))}
+              <AddButton
+                columnId={column.id}
+                setColumns={setColumns}
+                nextItemId={nextItemId}
+                setNextItemId={setNextItemId}
+              />
             </Card>
-            <AddButton
-              columnId={column.id}
-              setColumns={setColumns}
-              nextItemId={nextItemId}
-              setNextItemId={setNextItemId}
-            />
           </Grid.Col>
         ))}
       </Grid>

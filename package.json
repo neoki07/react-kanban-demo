@@ -1,5 +1,5 @@
 {
-  "name": "my-react-js-template",
+  "name": "react-kanban-demo",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

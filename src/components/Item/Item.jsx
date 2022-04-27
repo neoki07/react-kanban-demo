@@ -3,9 +3,6 @@ import React, { useEffect } from "react";
 
 import styles from "./Item.module.css";
 
-// import { Handle } from "src/components/Handle";
-// import { Remove } from "src/components/Remove";
-
 export const Item = React.memo(
   React.forwardRef(
     (
@@ -16,11 +13,8 @@ export const Item = React.memo(
         disabled,
         fadeIn,
         handle,
-        // height,
         index,
         listeners,
-        // onRemove,
-        // renderItem,
         sorting,
         style,
         transition,
@@ -97,12 +91,6 @@ export const Item = React.memo(
             tabIndex={!handle ? 0 : undefined}
           >
             {value}
-            {/* <span className={styles.Actions}>
-              {onRemove ? (
-                <Remove className={styles.Remove} onClick={onRemove} />
-              ) : null}
-              {handle ? <Handle {...listeners} /> : null}
-            </span> */}
           </div>
         </li>
       );

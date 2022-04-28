@@ -45,7 +45,7 @@ const dropAnimation = {
 };
 
 export function MultipleContainers() {
-  const [items, setItems] = useState({
+  const [containers, setContainers] = useState({
     todo: {
       label: "未着手",
       color: "blue",
@@ -62,11 +62,9 @@ export function MultipleContainers() {
       items: ["Done 1", "Done 2", "Done 3"],
     },
   });
-  const [containers, setContainers] = useState(Object.keys(items));
   const [activeId, setActiveId] = useState(null);
   const lastOverId = useRef(null);
   const recentlyMovedToNewContainer = useRef(false);
-  const isSortingContainer = activeId ? containers.includes(activeId) : false;
 
   /**
    * Custom collision detection strategy optimized for multiple containers
@@ -78,11 +76,11 @@ export function MultipleContainers() {
    */
   const collisionDetectionStrategy = useCallback(
     (args) => {
-      if (activeId && activeId in items) {
+      if (activeId && activeId in containers) {
         return closestCenter({
           ...args,
           droppableContainers: args.droppableContainers.filter(
-            (container) => container.id in items
+            (container) => container.id in containers
           ),
         });
       }
@@ -97,8 +95,8 @@ export function MultipleContainers() {
       let overId = getFirstCollision(intersections, "id");
 
       if (overId != null) {
-        if (overId in items) {
-          const containerItems = items[overId].items;
+        if (overId in containers) {
+          const containerItems = containers[overId].items;
 
           // If a container is matched and it contains items (columns 'A', 'B', 'C')
           if (containerItems.length > 0) {
@@ -131,18 +129,20 @@ export function MultipleContainers() {
       // If no droppable is matched, return the last match
       return lastOverId.current ? [{ id: lastOverId.current }] : [];
     },
-    [activeId, items]
+    [activeId, containers]
   );
   const [clonedItems, setClonedItems] = useState(null);
   const findContainer = useCallback(
     (id) => {
-      if (id in items) {
+      if (id in containers) {
         return id;
       }
 
-      return Object.keys(items).find((key) => items[key].items.includes(id));
+      return Object.keys(containers).find((key) =>
+        containers[key].items.includes(id)
+      );
     },
-    [items]
+    [containers]
   );
 
   const getIndex = (id) => {
@@ -152,7 +152,7 @@ export function MultipleContainers() {
       return -1;
     }
 
-    const index = items[container].items.indexOf(id);
+    const index = containers[container].items.indexOf(id);
 
     return index;
   };
@@ -160,16 +160,16 @@ export function MultipleContainers() {
   const handleDragStart = useCallback(
     ({ active }) => {
       setActiveId(active.id);
-      setClonedItems(items);
+      setClonedItems(containers);
     },
-    [setClonedItems, items]
+    [setClonedItems, containers]
   );
 
   const handleDragOver = useCallback(
     ({ active, over }) => {
       const overId = over ? over.id : null;
 
-      if (!overId || active.id in items) {
+      if (!overId || active.id in containers) {
         return;
       }
       const overContainer = findContainer(overId);
@@ -180,7 +180,7 @@ export function MultipleContainers() {
       }
 
       if (activeContainer !== overContainer) {
-        setItems((items) => {
+        setContainers((items) => {
           const activeItems = items[activeContainer].items;
           const overItems = items[overContainer].items;
           const overIndex = overItems.indexOf(overId);
@@ -228,20 +228,11 @@ export function MultipleContainers() {
         });
       }
     },
-    [findContainer, items]
+    [findContainer, containers]
   );
 
   const handleDragEnd = useCallback(
     ({ active, over }) => {
-      if (active.id in items && over ? over.id : null) {
-        setContainers((containers) => {
-          const activeIndex = containers.indexOf(active.id);
-          const overIndex = containers.indexOf(over.id);
-
-          return arrayMove(containers, activeIndex, overIndex);
-        });
-      }
-
       const activeContainer = findContainer(active.id);
 
       if (!activeContainer) {
@@ -259,11 +250,13 @@ export function MultipleContainers() {
       const overContainer = findContainer(overId);
 
       if (overContainer) {
-        const activeIndex = items[activeContainer].items.indexOf(active.id);
-        const overIndex = items[overContainer].items.indexOf(overId);
+        const activeIndex = containers[activeContainer].items.indexOf(
+          active.id
+        );
+        const overIndex = containers[overContainer].items.indexOf(overId);
 
         if (activeIndex !== overIndex) {
-          setItems((items) => ({
+          setContainers((items) => ({
             ...items,
             [overContainer]: {
               ...items[overContainer],
@@ -279,14 +272,14 @@ export function MultipleContainers() {
 
       setActiveId(null);
     },
-    [findContainer, items]
+    [findContainer, containers]
   );
 
   const handleDragCancel = useCallback(() => {
     if (clonedItems) {
       // Reset items to their original state in case items have been
       // Dragged across containers
-      setItems(clonedItems);
+      setContainers(clonedItems);
     }
 
     setActiveId(null);
@@ -297,7 +290,7 @@ export function MultipleContainers() {
     requestAnimationFrame(() => {
       recentlyMovedToNewContainer.current = false;
     });
-  }, [items]);
+  }, [containers]);
 
   return (
     <DndContext
@@ -312,34 +305,23 @@ export function MultipleContainers() {
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div
-        className="m-12"
-        // style={{
-        //   display: "inline-grid",
-        //   boxSizing: "border-box",
-        //   padding: 20,
-        //   gridAutoFlow: "column",
-        // }}
-      >
+      <div className="m-12">
         <Grid>
-          {containers.map((containerId) => (
+          {Object.keys(containers).map((containerId) => (
             <Grid.Col key={containerId} span={4}>
               <DroppableContainer
                 key={containerId}
                 id={containerId}
-                label={items[containerId].label}
-                color={items[containerId].color}
-                items={items[containerId].items}
+                label={containers[containerId].label}
+                color={containers[containerId].color}
+                items={containers[containerId].items}
               >
-                <SortableContext items={items[containerId].items}>
-                  {items[containerId].items.map((value, index) => {
+                <SortableContext items={containers[containerId].items}>
+                  {containers[containerId].items.map((value) => {
                     return (
                       <SortableItem
-                        disabled={isSortingContainer}
                         key={value}
                         id={value}
-                        // index={index}
-                        // handle={false}
                         containerId={containerId}
                         getIndex={getIndex}
                       />
@@ -361,75 +343,26 @@ export function MultipleContainers() {
   );
 
   function renderSortableItemDragOverlay(id) {
-    return (
-      <Item
-        value={id}
-        // handle={false}
-        // color={getColor(id)}
-        dragOverlay
-      />
-    );
+    return <Item value={id} dragOverlay />;
   }
 }
 
-// function getColor(id) {
-//   switch (id[0]) {
-//     case "A":
-//       return "#7193f1";
-//     case "B":
-//       return "#ffda6c";
-//     case "C":
-//       return "#00bcd4";
-//     case "D":
-//       return "#ef769f";
-//   }
-
-//   return undefined;
-// }
-
-// function SortableItem({ disabled, id, index, handle }) {
 function SortableItem({ disabled, id }) {
-  const {
-    setNodeRef,
-    listeners,
-    isDragging,
-    // isSorting,
-    transform,
-    transition,
-  } = useSortable({
-    id,
-  });
-  // const mounted = useMountStatus();
-  // const mountedWhileDragging = isDragging && !mounted;
-
+  const { setNodeRef, listeners, isDragging, transform, transition } =
+    useSortable({
+      id,
+    });
   return (
     <Item
       ref={disabled ? undefined : setNodeRef}
       value={id}
       dragging={isDragging}
-      // sorting={isSorting}
-      // handle={handle}
-      // index={index}
-      // color={getColor(id)}
       transition={transition}
       transform={transform}
-      // fadeIn={mountedWhileDragging}
       listeners={listeners}
     />
   );
 }
-
-// function useMountStatus() {
-//   const [isMounted, setIsMounted] = useState(false);
-
-//   useEffect(() => {
-//     const timeout = setTimeout(() => setIsMounted(true), 500);
-
-//     return () => clearTimeout(timeout);
-//   }, []);
-
-//   return isMounted;
-// }
 
 // const initialColumns = [
 //   {

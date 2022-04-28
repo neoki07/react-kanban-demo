@@ -9,21 +9,13 @@ export const Item = React.memo(
   React.forwardRef(
     (
       {
-        // color,
         dragOverlay,
         dragging,
-        // disabled,
-        // fadeIn,
-        // handle,
-        // index,
         listeners,
-        // sorting,
-        // style,
         transition,
         transform,
         value,
-        // wrapperStyle,
-        // ...props
+        ...props
       },
       ref
     ) => {
@@ -53,16 +45,6 @@ export const Item = React.memo(
           {...listeners}
           ref={ref}
         >
-          {/* <div
-            className={classNames(
-              styles.Item,
-              dragging && styles.dragging,
-              dragOverlay && styles.dragOverlay
-            )}
-            {...listeners}
-          >
-            {value}
-          </div> */}
           <Paper
             className="relative m-1 w-full break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
             radius="sm"

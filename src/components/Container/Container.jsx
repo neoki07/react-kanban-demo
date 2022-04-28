@@ -9,6 +9,7 @@ export const Container = forwardRef(
       // horizontal,
       // onClick,
       label,
+      color,
       // placeholder,
       // style,
       // scrollable,
@@ -23,7 +24,7 @@ export const Container = forwardRef(
 
     return (
       <Paper>
-        <Badge className="flex justify-center" size="lg">
+        <Badge className="flex justify-center" size="lg" color={color}>
           {label}
         </Badge>
         <Divider my="sm" variant="dotted" />

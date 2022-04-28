@@ -46,9 +46,21 @@ const dropAnimation = {
 
 export function MultipleContainers() {
   const [items, setItems] = useState({
-    未着手: ["Todo 1", "Todo 2", "Todo 3"],
-    対応中: ["Doing 1", "Doing 2", "Doing 3"],
-    完了: ["Done 1", "Done 2", "Done 3"],
+    todo: {
+      label: "未着手",
+      color: "blue",
+      items: ["Todo 1", "Todo 2", "Todo 3"],
+    },
+    doing: {
+      label: "対応中",
+      color: "teal",
+      items: ["Doing 1", "Doing 2", "Doing 3"],
+    },
+    done: {
+      label: "完了",
+      color: "red",
+      items: ["Done 1", "Done 2", "Done 3"],
+    },
   });
   const [containers, setContainers] = useState(Object.keys(items));
   const [activeId, setActiveId] = useState(null);
@@ -86,7 +98,7 @@ export function MultipleContainers() {
 
       if (overId != null) {
         if (overId in items) {
-          const containerItems = items[overId];
+          const containerItems = items[overId].items;
 
           // If a container is matched and it contains items (columns 'A', 'B', 'C')
           if (containerItems.length > 0) {
@@ -128,7 +140,7 @@ export function MultipleContainers() {
         return id;
       }
 
-      return Object.keys(items).find((key) => items[key].includes(id));
+      return Object.keys(items).find((key) => items[key].items.includes(id));
     },
     [items]
   );
@@ -140,7 +152,7 @@ export function MultipleContainers() {
       return -1;
     }
 
-    const index = items[container].indexOf(id);
+    const index = items[container].items.indexOf(id);
 
     return index;
   };
@@ -169,8 +181,8 @@ export function MultipleContainers() {
 
       if (activeContainer !== overContainer) {
         setItems((items) => {
-          const activeItems = items[activeContainer];
-          const overItems = items[overContainer];
+          const activeItems = items[activeContainer].items;
+          const overItems = items[overContainer].items;
           const overIndex = overItems.indexOf(overId);
           const activeIndex = activeItems.indexOf(active.id);
 
@@ -195,17 +207,23 @@ export function MultipleContainers() {
 
           return {
             ...items,
-            [activeContainer]: items[activeContainer].filter(
-              (item) => item !== active.id
-            ),
-            [overContainer]: [
-              ...items[overContainer].slice(0, newIndex),
-              items[activeContainer][activeIndex],
-              ...items[overContainer].slice(
-                newIndex,
-                items[overContainer].length
+            [activeContainer]: {
+              ...items[activeContainer],
+              items: items[activeContainer].items.filter(
+                (item) => item !== active.id
               ),
-            ],
+            },
+            [overContainer]: {
+              ...items[overContainer],
+              items: [
+                ...items[overContainer].items.slice(0, newIndex),
+                items[activeContainer].items[activeIndex],
+                ...items[overContainer].items.slice(
+                  newIndex,
+                  items[overContainer].items.length
+                ),
+              ],
+            },
           };
         });
       }
@@ -241,17 +259,20 @@ export function MultipleContainers() {
       const overContainer = findContainer(overId);
 
       if (overContainer) {
-        const activeIndex = items[activeContainer].indexOf(active.id);
-        const overIndex = items[overContainer].indexOf(overId);
+        const activeIndex = items[activeContainer].items.indexOf(active.id);
+        const overIndex = items[overContainer].items.indexOf(overId);
 
         if (activeIndex !== overIndex) {
           setItems((items) => ({
             ...items,
-            [overContainer]: arrayMove(
-              items[overContainer],
-              activeIndex,
-              overIndex
-            ),
+            [overContainer]: {
+              ...items[overContainer],
+              items: arrayMove(
+                items[overContainer].items,
+                activeIndex,
+                overIndex
+              ),
+            },
           }));
         }
       }
@@ -306,11 +327,12 @@ export function MultipleContainers() {
               <DroppableContainer
                 key={containerId}
                 id={containerId}
-                label={containerId}
-                items={items[containerId]}
+                label={items[containerId].label}
+                color={items[containerId].color}
+                items={items[containerId].items}
               >
-                <SortableContext items={items[containerId]}>
-                  {items[containerId].map((value, index) => {
+                <SortableContext items={items[containerId].items}>
+                  {items[containerId].items.map((value, index) => {
                     return (
                       <SortableItem
                         disabled={isSortingContainer}

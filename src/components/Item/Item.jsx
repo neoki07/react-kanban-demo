@@ -1,3 +1,5 @@
+import { CSS } from "@dnd-kit/utilities";
+import { Paper, Text } from "@mantine/core";
 import classNames from "classnames";
 import React, { useEffect } from "react";
 
@@ -7,21 +9,21 @@ export const Item = React.memo(
   React.forwardRef(
     (
       {
-        color,
+        // color,
         dragOverlay,
         dragging,
-        disabled,
-        fadeIn,
-        handle,
-        index,
+        // disabled,
+        // fadeIn,
+        // handle,
+        // index,
         listeners,
-        sorting,
-        style,
+        // sorting,
+        // style,
         transition,
         transform,
         value,
-        wrapperStyle,
-        ...props
+        // wrapperStyle,
+        // ...props
       },
       ref
     ) => {
@@ -41,57 +43,32 @@ export const Item = React.memo(
         <li
           className={classNames(
             styles.Wrapper,
-            fadeIn && styles.fadeIn,
-            sorting && styles.sorting,
             dragOverlay && styles.dragOverlay
           )}
           style={{
-            ...wrapperStyle,
-            transition: [
-              transition,
-              wrapperStyle ? wrapperStyle.transition : null,
-            ]
-              .filter(Boolean)
-              .join(", "),
-            "--translate-x": transform
-              ? `${Math.round(transform.x)}px`
-              : undefined,
-            "--translate-y": transform
-              ? `${Math.round(transform.y)}px`
-              : undefined,
-            "--scale-x": transform
-              ? transform.scaleX
-                ? `${transform.scaleX}`
-                : undefined
-              : null,
-            "--scale-y": transform
-              ? transform.scaleY
-                ? `${transform.scaleY}`
-                : undefined
-              : null,
-            "--index": index,
-            "--color": color,
+            transition,
+            transform: CSS.Transform.toString(transform),
             opacity: dragging ? 0.5 : 1,
           }}
+          {...listeners}
           ref={ref}
         >
-          <div
+          {/* <div
             className={classNames(
               styles.Item,
               dragging && styles.dragging,
-              handle && styles.withHandle,
-              dragOverlay && styles.dragOverlay,
-              disabled && styles.disabled,
-              color && styles.color
+              dragOverlay && styles.dragOverlay
             )}
-            style={style}
-            data-cypress="draggable-item"
-            {...(!handle ? listeners : undefined)}
-            {...props}
-            tabIndex={!handle ? 0 : undefined}
+            {...listeners}
           >
             {value}
-          </div>
+          </div> */}
+          <Paper
+            className="relative m-1 w-full break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
+            radius="sm"
+          >
+            <Text>{value}</Text>
+          </Paper>
         </li>
       );
     }

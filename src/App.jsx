@@ -46,10 +46,9 @@ const dropAnimation = {
 
 export function MultipleContainers() {
   const [items, setItems] = useState({
-    A: ["A1", "A2", "A3"],
-    B: ["B1", "B2", "B3"],
-    C: ["C1", "C2", "C3"],
-    D: ["D1", "D2", "D3"],
+    未着手: ["Todo 1", "Todo 2", "Todo 3"],
+    対応中: ["Doing 1", "Doing 2", "Doing 3"],
+    完了: ["Done 1", "Done 2", "Done 3"],
   });
   const [containers, setContainers] = useState(Object.keys(items));
   const [activeId, setActiveId] = useState(null);
@@ -293,38 +292,42 @@ export function MultipleContainers() {
       onDragCancel={handleDragCancel}
     >
       <div
-        style={{
-          display: "inline-grid",
-          boxSizing: "border-box",
-          padding: 20,
-          gridAutoFlow: "column",
-        }}
+        className="m-12"
+        // style={{
+        //   display: "inline-grid",
+        //   boxSizing: "border-box",
+        //   padding: 20,
+        //   gridAutoFlow: "column",
+        // }}
       >
-        {containers.map((containerId) => (
-          <DroppableContainer
-            key={containerId}
-            id={containerId}
-            label={`Column ${containerId}`}
-            items={items[containerId]}
-            unstyled={false}
-          >
-            <SortableContext items={items[containerId]}>
-              {items[containerId].map((value, index) => {
-                return (
-                  <SortableItem
-                    disabled={isSortingContainer}
-                    key={value}
-                    id={value}
-                    index={index}
-                    handle={false}
-                    containerId={containerId}
-                    getIndex={getIndex}
-                  />
-                );
-              })}
-            </SortableContext>
-          </DroppableContainer>
-        ))}
+        <Grid>
+          {containers.map((containerId) => (
+            <Grid.Col key={containerId} span={4}>
+              <DroppableContainer
+                key={containerId}
+                id={containerId}
+                label={containerId}
+                items={items[containerId]}
+              >
+                <SortableContext items={items[containerId]}>
+                  {items[containerId].map((value, index) => {
+                    return (
+                      <SortableItem
+                        disabled={isSortingContainer}
+                        key={value}
+                        id={value}
+                        // index={index}
+                        // handle={false}
+                        containerId={containerId}
+                        getIndex={getIndex}
+                      />
+                    );
+                  })}
+                </SortableContext>
+              </DroppableContainer>
+            </Grid.Col>
+          ))}
+        </Grid>
       </div>
       {createPortal(
         <DragOverlay adjustScale={false} dropAnimation={dropAnimation}>
@@ -336,67 +339,75 @@ export function MultipleContainers() {
   );
 
   function renderSortableItemDragOverlay(id) {
-    return <Item value={id} handle={false} color={getColor(id)} dragOverlay />;
+    return (
+      <Item
+        value={id}
+        // handle={false}
+        // color={getColor(id)}
+        dragOverlay
+      />
+    );
   }
 }
 
-function getColor(id) {
-  switch (id[0]) {
-    case "A":
-      return "#7193f1";
-    case "B":
-      return "#ffda6c";
-    case "C":
-      return "#00bcd4";
-    case "D":
-      return "#ef769f";
-  }
+// function getColor(id) {
+//   switch (id[0]) {
+//     case "A":
+//       return "#7193f1";
+//     case "B":
+//       return "#ffda6c";
+//     case "C":
+//       return "#00bcd4";
+//     case "D":
+//       return "#ef769f";
+//   }
 
-  return undefined;
-}
+//   return undefined;
+// }
 
-function SortableItem({ disabled, id, index, handle }) {
+// function SortableItem({ disabled, id, index, handle }) {
+function SortableItem({ disabled, id }) {
   const {
     setNodeRef,
     listeners,
     isDragging,
-    isSorting,
+    // isSorting,
     transform,
     transition,
   } = useSortable({
     id,
   });
-  const mounted = useMountStatus();
-  const mountedWhileDragging = isDragging && !mounted;
+  // const mounted = useMountStatus();
+  // const mountedWhileDragging = isDragging && !mounted;
 
   return (
     <Item
       ref={disabled ? undefined : setNodeRef}
       value={id}
       dragging={isDragging}
-      sorting={isSorting}
-      handle={handle}
-      index={index}
-      color={getColor(id)}
+      // sorting={isSorting}
+      // handle={handle}
+      // index={index}
+      // color={getColor(id)}
       transition={transition}
       transform={transform}
-      fadeIn={mountedWhileDragging}
+      // fadeIn={mountedWhileDragging}
       listeners={listeners}
     />
   );
 }
 
-function useMountStatus() {
-  const [isMounted, setIsMounted] = useState(false);
+// function useMountStatus() {
+//   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsMounted(true), 500);
+//   useEffect(() => {
+//     const timeout = setTimeout(() => setIsMounted(true), 500);
 
-    return () => clearTimeout(timeout);
-  }, []);
+//     return () => clearTimeout(timeout);
+//   }, []);
 
-  return isMounted;
-}
+//   return isMounted;
+// }
 
 // const initialColumns = [
 //   {

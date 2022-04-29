@@ -15,6 +15,7 @@ export const Item = React.memo(
         transition,
         transform,
         value,
+        onClick,
         ...props
       },
       ref
@@ -48,6 +49,7 @@ export const Item = React.memo(
           <Paper
             className="relative m-1 w-full break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
             radius="sm"
+            onClick={onClick}
           >
             <Text>{value}</Text>
           </Paper>

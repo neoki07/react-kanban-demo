@@ -8,6 +8,9 @@ import {
   pointerWithin,
   rectIntersection,
   getFirstCollision,
+  useSensors,
+  useSensor,
+  MouseSensor,
 } from "@dnd-kit/core";
 import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
 import {
@@ -132,6 +135,13 @@ export function MultipleContainers() {
     [activeId, containers]
   );
   const [clonedItems, setClonedItems] = useState(null);
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
   const findContainer = useCallback(
     (id) => {
       if (id in containers) {
@@ -294,6 +304,7 @@ export function MultipleContainers() {
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={collisionDetectionStrategy}
       measuring={{
         droppable: {
@@ -324,6 +335,7 @@ export function MultipleContainers() {
                         id={value}
                         containerId={containerId}
                         getIndex={getIndex}
+                        setContainers={setContainers}
                       />
                     );
                   })}
@@ -347,20 +359,84 @@ export function MultipleContainers() {
   }
 }
 
-function SortableItem({ disabled, id }) {
+function EditForm({ initialValues, onSubmit, onCancel }) {
+  const form = useForm({
+    initialValues,
+  });
+
+  return (
+    <form onSubmit={form.onSubmit(onSubmit)}>
+      <Group position="apart">
+        <TextInput
+          required
+          value={form.values.text}
+          onChange={(event) =>
+            form.setFieldValue("value", event.currentTarget.value)
+          }
+          error={form.errors.text}
+          variant="default"
+        />
+        <Button
+          className="bg-cyan-500 hover:bg-cyan-600"
+          type="submit"
+          size="sm"
+        >
+          Save
+        </Button>
+      </Group>
+    </form>
+  );
+}
+
+function SortableItem({ disabled, id, setContainers }) {
+  const [opened, setOpened] = useState(false);
+
   const { setNodeRef, listeners, isDragging, transform, transition } =
     useSortable({
       id,
     });
   return (
-    <Item
-      ref={disabled ? undefined : setNodeRef}
-      value={id}
-      dragging={isDragging}
-      transition={transition}
-      transform={transform}
-      listeners={listeners}
-    />
+    <Popover
+      className="w-full"
+      opened={opened}
+      onClose={() => setOpened(false)}
+      position="bottom"
+      transition="scale-y"
+      target={
+        <Item
+          ref={disabled ? undefined : setNodeRef}
+          value={id}
+          dragging={isDragging}
+          transition={transition}
+          transform={transform}
+          listeners={listeners}
+          onClick={() => setOpened(!opened)}
+        />
+      }
+    >
+      <EditForm
+        initialValues={{ value: id }}
+        onSubmit={(data) => {
+          console.log("data:", data);
+          setOpened(false);
+          setContainers((containers) => {
+            const targetContainer = Object.keys(containers).find((key) =>
+              containers[key].items.includes(id)
+            );
+
+            return {
+              ...containers,
+              [targetContainer]: {
+                ...containers[targetContainer],
+                items: containers[targetContainer].items.map((itemId) => {
+                  return itemId === id ? data.value : itemId;
+                }),
+              },
+            };
+          });
+        }}
+      />
+    </Popover>
   );
 }
 

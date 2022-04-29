@@ -340,6 +340,10 @@ export function MultipleContainers() {
                     );
                   })}
                 </SortableContext>
+                <AddButton
+                  containerId={containerId}
+                  setContainers={setContainers}
+                />
               </DroppableContainer>
             </Grid.Col>
           ))}
@@ -417,7 +421,6 @@ function SortableItem({ disabled, id, setContainers }) {
       <EditForm
         initialValues={{ value: id }}
         onSubmit={(data) => {
-          console.log("data:", data);
           setOpened(false);
           setContainers((containers) => {
             const targetContainer = Object.keys(containers).find((key) =>
@@ -439,6 +442,48 @@ function SortableItem({ disabled, id, setContainers }) {
     </Popover>
   );
 }
+
+const AddButton = ({ disabled, containerId, setContainers }) => {
+  const [opened, setOpened] = useState(false);
+
+  return (
+    <Popover
+      className="w-full"
+      opened={opened}
+      onClose={() => setOpened(false)}
+      position="bottom"
+      transition="scale-y"
+      target={
+        <div className="m-2 flex justify-center">
+          <ActionIcon
+            className="hover:bg-gray-100"
+            radius={10}
+            size={40}
+            onClick={() => setOpened((o) => !o)}
+          >
+            <Plus size={20} />
+          </ActionIcon>
+        </div>
+      }
+    >
+      <EditForm
+        initialValues={{ value: "" }}
+        onSubmit={(data) => {
+          setOpened(false);
+          setContainers((containers) => {
+            return {
+              ...containers,
+              [containerId]: {
+                ...containers[containerId],
+                items: [...containers[containerId].items, data.value],
+              },
+            };
+          });
+        }}
+      />
+    </Popover>
+  );
+};
 
 // const initialColumns = [
 //   {

@@ -414,6 +414,7 @@ function SortableItem({ disabled, id, setContainers }) {
           transition={transition}
           transform={transform}
           listeners={listeners}
+          setContainers={setContainers}
           onClick={() => setOpened(!opened)}
         />
       }

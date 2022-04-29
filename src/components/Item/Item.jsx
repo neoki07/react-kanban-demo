@@ -2,7 +2,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ActionIcon, Paper, Text } from "@mantine/core";
 import { useHover, useMergedRef } from "@mantine/hooks";
 import classNames from "classnames";
-import React, { useEffect } from "react";
+import React from "react";
 import { X } from "tabler-icons-react";
 
 import styles from "./Item.module.css";
@@ -25,18 +25,6 @@ export const Item = React.memo(
     ) => {
       const { hovered, ref: hoverRef } = useHover();
       const mergedRef = useMergedRef(ref, hoverRef);
-
-      useEffect(() => {
-        if (!dragOverlay) {
-          return;
-        }
-
-        document.body.style.cursor = "grabbing";
-
-        return () => {
-          document.body.style.cursor = "";
-        };
-      }, [dragOverlay]);
 
       return (
         <li

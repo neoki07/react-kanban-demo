@@ -32,18 +32,18 @@ export const Item = React.memo(
             styles.Wrapper,
             dragOverlay && styles.dragOverlay
           )}
-          style={{
-            transition,
-            transform: CSS.Transform.toString(transform),
-            opacity: dragging ? 0.5 : 1,
-          }}
-          {...listeners}
-          ref={mergedRef}
         >
           <Paper
             className="relative m-1 w-full break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
+            style={{
+              transition,
+              transform: CSS.Transform.toString(transform),
+              opacity: dragging ? 0.5 : 1,
+            }}
             radius="sm"
+            ref={mergedRef}
             onClick={onClick}
+            {...listeners}
           >
             <Text>{value}</Text>
             {hovered && !dragOverlay && (

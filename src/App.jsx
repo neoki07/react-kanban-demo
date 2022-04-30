@@ -52,19 +52,37 @@ export function MultipleContainers() {
     todo: {
       label: "未着手",
       color: "blue",
-      items: ["Todo 1", "Todo 2", "Todo 3"],
+      items: [
+        { id: 1, value: "Todo 1" },
+        { id: 2, value: "Todo 2" },
+        { id: 3, value: "Todo 3" },
+      ],
     },
     doing: {
       label: "対応中",
       color: "teal",
-      items: ["Doing 1", "Doing 2", "Doing 3"],
+      items: [
+        { id: 4, value: "Doing 1" },
+        { id: 5, value: "Doing 2" },
+        { id: 6, value: "Doing 3" },
+      ],
     },
     done: {
       label: "完了",
       color: "red",
-      items: ["Done 1", "Done 2", "Done 3"],
+      items: [
+        { id: 7, value: "Done 1" },
+        { id: 8, value: "Done 2" },
+        { id: 9, value: "Done 3" },
+      ],
     },
   });
+  const [nextItemId, setNextItemId] = useState(
+    Object.values(containers).reduce(
+      (prev, container) => prev + container.items.length,
+      1
+    )
+  );
   const [activeId, setActiveId] = useState(null);
   const lastOverId = useRef(null);
   const recentlyMovedToNewContainer = useRef(false);
@@ -149,7 +167,7 @@ export function MultipleContainers() {
       }
 
       return Object.keys(containers).find((key) =>
-        containers[key].items.includes(id)
+        containers[key].items.some((item) => item.id === id)
       );
     },
     [containers]
@@ -162,10 +180,27 @@ export function MultipleContainers() {
       return -1;
     }
 
-    const index = containers[container].items.indexOf(id);
+    const index = containers[container].items.findIndex(
+      (item) => item.id === id
+    );
 
     return index;
   };
+
+  const findItem = useCallback(
+    (id) => {
+      const container = findContainer(id);
+
+      if (!container) {
+        return null;
+      }
+
+      const item = containers[container].items.find((item) => item.id === id);
+
+      return item;
+    },
+    [containers, findContainer]
+  );
 
   const handleDragStart = useCallback(
     ({ active }) => {
@@ -193,6 +228,10 @@ export function MultipleContainers() {
         setContainers((containers) => {
           const activeItems = containers[activeContainer].items;
           const overItems = containers[overContainer].items;
+          const overIndex = overItems.findIndex((item) => item.id === overId);
+          const activeIndex = activeItems.findIndex(
+            (item) => item.id === active.id
+          );
 
           let newIndex;
 
@@ -218,6 +257,7 @@ export function MultipleContainers() {
             [activeContainer]: {
               ...containers[activeContainer],
               items: containers[activeContainer].items.filter(
+                (item) => item.id !== active.id
               ),
             },
             [overContainer]: {
@@ -257,10 +297,12 @@ export function MultipleContainers() {
       const overContainer = findContainer(overId);
 
       if (overContainer) {
-        const activeIndex = containers[activeContainer].items.indexOf(
-          active.id
+        const activeIndex = containers[activeContainer].items.findIndex(
+          (item) => item.id === active.id
         );
-        const overIndex = containers[overContainer].items.indexOf(overId);
+        const overIndex = containers[overContainer].items.findIndex(
+          (item) => item.id === overId
+        );
 
         if (activeIndex !== overIndex) {
           setContainers((items) => ({
@@ -325,11 +367,12 @@ export function MultipleContainers() {
                 items={containers[containerId].items}
               >
                 <SortableContext items={containers[containerId].items}>
-                  {containers[containerId].items.map((value) => {
+                  {containers[containerId].items.map((item) => {
                     return (
                       <SortableItem
-                        key={value}
-                        id={value}
+                        key={item.id}
+                        id={item.id}
+                        value={item.value}
                         containerId={containerId}
                         getIndex={getIndex}
                         setContainers={setContainers}
@@ -340,6 +383,8 @@ export function MultipleContainers() {
                 <AddButton
                   containerId={containerId}
                   setContainers={setContainers}
+                  nextItemId={nextItemId}
+                  setNextItemId={setNextItemId}
                 />
               </DroppableContainer>
             </Grid.Col>
@@ -348,15 +393,17 @@ export function MultipleContainers() {
       </div>
       {createPortal(
         <DragOverlay adjustScale={false} dropAnimation={dropAnimation}>
-          {activeId ? renderSortableItemDragOverlay(activeId) : null}
+          {activeId
+            ? renderSortableItemDragOverlay(findItem(activeId).value)
+            : null}
         </DragOverlay>,
         document.body
       )}
     </DndContext>
   );
 
-  function renderSortableItemDragOverlay(id) {
-    return <Item value={id} dragOverlay />;
+  function renderSortableItemDragOverlay(value) {
+    return <Item value={value} dragOverlay />;
   }
 }
 
@@ -389,7 +436,7 @@ function EditForm({ initialValues, onSubmit, onCancel }) {
   );
 }
 
-function SortableItem({ disabled, id, setContainers }) {
+function SortableItem({ disabled, id, value, setContainers }) {
   const [opened, setOpened] = useState(false);
 
   const { setNodeRef, listeners, isDragging, transform, transition } =
@@ -406,7 +453,8 @@ function SortableItem({ disabled, id, setContainers }) {
       target={
         <Item
           ref={disabled ? undefined : setNodeRef}
-          value={id}
+          id={id}
+          value={value}
           dragging={isDragging}
           transition={transition}
           transform={transform}
@@ -417,20 +465,20 @@ function SortableItem({ disabled, id, setContainers }) {
       }
     >
       <EditForm
-        initialValues={{ value: id }}
+        initialValues={{ value: value }}
         onSubmit={(data) => {
           setOpened(false);
           setContainers((containers) => {
             const targetContainer = Object.keys(containers).find((key) =>
-              containers[key].items.includes(id)
+              containers[key].items.some((item) => item.id === id)
             );
 
             return {
               ...containers,
               [targetContainer]: {
                 ...containers[targetContainer],
-                items: containers[targetContainer].items.map((itemId) => {
-                  return itemId === id ? data.value : itemId;
+                items: containers[targetContainer].items.map((item) => {
+                  return item.id === id ? { id, value: data.value } : item;
                 }),
               },
             };
@@ -441,7 +489,13 @@ function SortableItem({ disabled, id, setContainers }) {
   );
 }
 
-const AddButton = ({ disabled, containerId, setContainers }) => {
+const AddButton = ({
+  disabled,
+  containerId,
+  setContainers,
+  nextItemId,
+  setNextItemId,
+}) => {
   const [opened, setOpened] = useState(false);
 
   return (
@@ -468,12 +522,16 @@ const AddButton = ({ disabled, containerId, setContainers }) => {
         initialValues={{ value: "" }}
         onSubmit={(data) => {
           setOpened(false);
+          setNextItemId((id) => id + 1);
           setContainers((containers) => {
             return {
               ...containers,
               [containerId]: {
                 ...containers[containerId],
-                items: [...containers[containerId].items, data.value],
+                items: [
+                  ...containers[containerId].items,
+                  { id: nextItemId, value: data.value },
+                ],
               },
             };
           });

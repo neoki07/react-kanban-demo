@@ -16,6 +16,7 @@ export const Item = React.memo(
         listeners,
         transition,
         transform,
+        id,
         value,
         setContainers,
         onClick,
@@ -54,7 +55,8 @@ export const Item = React.memo(
                     e.stopPropagation();
                     setContainers((containers) => {
                       const targetContainer = Object.keys(containers).find(
-                        (key) => containers[key].items.includes(value)
+                        (key) =>
+                          containers[key].items.some((item) => item.id === id)
                       );
 
                       return {
@@ -62,7 +64,7 @@ export const Item = React.memo(
                         [targetContainer]: {
                           ...containers[targetContainer],
                           items: containers[targetContainer].items.filter(
-                            (itemId) => itemId !== value
+                            (item) => item.id !== id
                           ),
                         },
                       };

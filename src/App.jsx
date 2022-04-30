@@ -190,15 +190,13 @@ export function MultipleContainers() {
       }
 
       if (activeContainer !== overContainer) {
-        setContainers((items) => {
-          const activeItems = items[activeContainer].items;
-          const overItems = items[overContainer].items;
-          const overIndex = overItems.indexOf(overId);
-          const activeIndex = activeItems.indexOf(active.id);
+        setContainers((containers) => {
+          const activeItems = containers[activeContainer].items;
+          const overItems = containers[overContainer].items;
 
           let newIndex;
 
-          if (overId in items) {
+          if (overId in containers) {
             newIndex = overItems.length + 1;
           } else {
             const isBelowOverItem =
@@ -216,21 +214,20 @@ export function MultipleContainers() {
           recentlyMovedToNewContainer.current = true;
 
           return {
-            ...items,
+            ...containers,
             [activeContainer]: {
-              ...items[activeContainer],
-              items: items[activeContainer].items.filter(
-                (item) => item !== active.id
+              ...containers[activeContainer],
+              items: containers[activeContainer].items.filter(
               ),
             },
             [overContainer]: {
-              ...items[overContainer],
+              ...containers[overContainer],
               items: [
-                ...items[overContainer].items.slice(0, newIndex),
-                items[activeContainer].items[activeIndex],
-                ...items[overContainer].items.slice(
+                ...containers[overContainer].items.slice(0, newIndex),
+                containers[activeContainer].items[activeIndex],
+                ...containers[overContainer].items.slice(
                   newIndex,
-                  items[overContainer].items.length
+                  containers[overContainer].items.length
                 ),
               ],
             },

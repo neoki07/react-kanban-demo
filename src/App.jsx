@@ -1,4 +1,3 @@
-/* eslint-disable unused-imports/no-unused-imports */
 import {
   DndContext,
   MeasuringStrategy,
@@ -12,42 +11,22 @@ import {
   useSensor,
   MouseSensor,
 } from "@dnd-kit/core";
-import { SortableContext, useSortable, arrayMove } from "@dnd-kit/sortable";
-import {
-  Card,
-  Grid,
-  Divider,
-  Badge,
-  TextInput,
-  Text,
-  Popover,
-  Group,
-  Button,
-  Paper,
-  ActionIcon,
-} from "@mantine/core";
-import { useForm, useHover } from "@mantine/hooks";
+import { SortableContext, arrayMove } from "@dnd-kit/sortable";
+import { Grid } from "@mantine/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X } from "tabler-icons-react";
 
+import { AddItemButton } from "src/components/AddItemButton";
 import { Container } from "src/components/Container";
 import { Item } from "src/components/Item";
-
-function DroppableContainer({ children, columns = 1, ...props }) {
-  return (
-    <Container columns={columns} {...props}>
-      {children}
-    </Container>
-  );
-}
+import { ItemWithEditForm } from "src/components/ItemWithEditForm";
 
 const dropAnimation = {
   ...defaultDropAnimation,
   dragSourceOpacity: 0.5,
 };
 
-export function MultipleContainers() {
+const App = () => {
   const [containers, setContainers] = useState({
     todo: {
       label: "未着手",
@@ -173,20 +152,6 @@ export function MultipleContainers() {
     [containers]
   );
 
-  const getIndex = (id) => {
-    const container = findContainer(id);
-
-    if (!container) {
-      return -1;
-    }
-
-    const index = containers[container].items.findIndex(
-      (item) => item.id === id
-    );
-
-    return index;
-  };
-
   const findItem = useCallback(
     (id) => {
       const container = findContainer(id);
@@ -195,12 +160,14 @@ export function MultipleContainers() {
         return null;
       }
 
-      const item = containers[container].items.find((item) => item.id === id);
-
-      return item;
+      return containers[container].items.find((item) => item.id === id);
     },
     [containers, findContainer]
   );
+
+  const renderSortableItemDragOverlay = (value) => {
+    return <Item value={value} dragOverlay />;
+  };
 
   const handleDragStart = useCallback(
     ({ active }) => {
@@ -359,34 +326,31 @@ export function MultipleContainers() {
         <Grid>
           {Object.keys(containers).map((containerId) => (
             <Grid.Col key={containerId} span={4}>
-              <DroppableContainer
+              <Container
                 key={containerId}
-                id={containerId}
                 label={containers[containerId].label}
                 color={containers[containerId].color}
-                items={containers[containerId].items}
               >
                 <SortableContext items={containers[containerId].items}>
                   {containers[containerId].items.map((item) => {
                     return (
-                      <SortableItem
+                      <ItemWithEditForm
                         key={item.id}
                         id={item.id}
                         value={item.value}
-                        containerId={containerId}
-                        getIndex={getIndex}
                         setContainers={setContainers}
+                        findContainer={findContainer}
                       />
                     );
                   })}
                 </SortableContext>
-                <AddButton
+                <AddItemButton
                   containerId={containerId}
                   setContainers={setContainers}
                   nextItemId={nextItemId}
                   setNextItemId={setNextItemId}
                 />
-              </DroppableContainer>
+              </Container>
             </Grid.Col>
           ))}
         </Grid>
@@ -401,466 +365,6 @@ export function MultipleContainers() {
       )}
     </DndContext>
   );
-
-  function renderSortableItemDragOverlay(value) {
-    return <Item value={value} dragOverlay />;
-  }
-}
-
-function EditForm({ initialValues, onSubmit, onCancel }) {
-  const form = useForm({
-    initialValues,
-  });
-
-  return (
-    <form onSubmit={form.onSubmit(onSubmit)}>
-      <Group position="apart">
-        <TextInput
-          required
-          value={form.values.text}
-          onChange={(event) =>
-            form.setFieldValue("value", event.currentTarget.value)
-          }
-          error={form.errors.text}
-          variant="default"
-        />
-        <Button
-          className="bg-cyan-500 hover:bg-cyan-600"
-          type="submit"
-          size="sm"
-        >
-          Save
-        </Button>
-      </Group>
-    </form>
-  );
-}
-
-function SortableItem({ disabled, id, value, setContainers }) {
-  const [opened, setOpened] = useState(false);
-
-  const { setNodeRef, listeners, isDragging, transform, transition } =
-    useSortable({
-      id,
-    });
-  return (
-    <Popover
-      className="w-full"
-      opened={opened}
-      onClose={() => setOpened(false)}
-      position="bottom"
-      transition="scale-y"
-      target={
-        <Item
-          ref={disabled ? undefined : setNodeRef}
-          id={id}
-          value={value}
-          dragging={isDragging}
-          transition={transition}
-          transform={transform}
-          listeners={listeners}
-          setContainers={setContainers}
-          onClick={() => setOpened(!opened)}
-        />
-      }
-    >
-      <EditForm
-        initialValues={{ value: value }}
-        onSubmit={(data) => {
-          setOpened(false);
-          setContainers((containers) => {
-            const targetContainer = Object.keys(containers).find((key) =>
-              containers[key].items.some((item) => item.id === id)
-            );
-
-            return {
-              ...containers,
-              [targetContainer]: {
-                ...containers[targetContainer],
-                items: containers[targetContainer].items.map((item) => {
-                  return item.id === id ? { id, value: data.value } : item;
-                }),
-              },
-            };
-          });
-        }}
-      />
-    </Popover>
-  );
-}
-
-const AddButton = ({
-  disabled,
-  containerId,
-  setContainers,
-  nextItemId,
-  setNextItemId,
-}) => {
-  const [opened, setOpened] = useState(false);
-
-  return (
-    <Popover
-      className="w-full"
-      opened={opened}
-      onClose={() => setOpened(false)}
-      position="bottom"
-      transition="scale-y"
-      target={
-        <div className="m-2 flex justify-center">
-          <ActionIcon
-            className="hover:bg-gray-100"
-            radius={10}
-            size={40}
-            onClick={() => setOpened((o) => !o)}
-          >
-            <Plus size={20} />
-          </ActionIcon>
-        </div>
-      }
-    >
-      <EditForm
-        initialValues={{ value: "" }}
-        onSubmit={(data) => {
-          setOpened(false);
-          setNextItemId((id) => id + 1);
-          setContainers((containers) => {
-            return {
-              ...containers,
-              [containerId]: {
-                ...containers[containerId],
-                items: [
-                  ...containers[containerId].items,
-                  { id: nextItemId, value: data.value },
-                ],
-              },
-            };
-          });
-        }}
-      />
-    </Popover>
-  );
 };
 
-// const initialColumns = [
-//   {
-//     id: 1,
-//     name: "未着手",
-//     color: "blue",
-//     items: [
-//       { id: 1, text: "Todo 1" },
-//       { id: 2, text: "Todo 2" },
-//       { id: 3, text: "Todo 3" },
-//     ],
-//   },
-//   {
-//     id: 2,
-//     name: "対応中",
-//     color: "teal",
-//     items: [
-//       { id: 4, text: "Doing 1" },
-//       { id: 5, text: "Doing 2" },
-//       { id: 6, text: "Doing 3" },
-//     ],
-//   },
-//   {
-//     id: 3,
-//     name: "完了",
-//     color: "red",
-//     items: [
-//       { id: 7, text: "Done 1" },
-//       { id: 8, text: "Done 2" },
-//       { id: 9, text: "Done 3" },
-//     ],
-//   },
-// ];
-
-// function EditForm({ initialValues, onSubmit, onCancel }) {
-//   const form = useForm({
-//     initialValues,
-//   });
-
-//   return (
-//     <form onSubmit={form.onSubmit(onSubmit)}>
-//       <Group position="apart">
-//         <TextInput
-//           required
-//           value={form.values.text}
-//           onChange={(event) =>
-//             form.setFieldValue("text", event.currentTarget.value)
-//           }
-//           error={form.errors.text}
-//           variant="default"
-//         />
-//         <Button
-//           className="bg-cyan-500 hover:bg-cyan-600"
-//           type="submit"
-//           size="sm"
-//         >
-//           Save
-//         </Button>
-//       </Group>
-//     </form>
-//   );
-// }
-
-// const KanbanItem = (props) => {
-//   const { item, columnId, setColumns } = props;
-//   const [opened, setOpened] = useState(false);
-//   const { hovered, ref } = useHover();
-//   const { attributes, listeners, setNodeRef, transform, transition } =
-//     useSortable({ id: item.id });
-//   const style = {
-//     transform: CSS.Transform.toString(transform),
-//     transition,
-//   };
-
-//   return (
-//     <Popover
-//       className="w-full"
-//       opened={opened}
-//       onClose={() => setOpened(false)}
-//       position="bottom"
-//       transition="scale-y"
-//       target={
-//         <div
-//           className="z-40"
-//           ref={setNodeRef}
-//           style={style}
-//           {...attributes}
-//           {...listeners}
-//         >
-//           <Paper
-//             className="relative m-1 break-words border border-gray-200 px-4 py-3 hover:cursor-pointer hover:bg-gray-50"
-//             radius="sm"
-//             onClick={() => setOpened((o) => !o)}
-//             ref={ref}
-//           >
-//             <Text>{item.text}</Text>
-//             {hovered && (
-//               <div className="absolute top-0 left-0 flex h-full w-full justify-end p-0">
-//                 <ActionIcon
-//                   className="h-full bg-gray-100 hover:bg-gray-200"
-//                   onClick={(e) => {
-//                     e.stopPropagation();
-//                     setColumns((prevColumns) =>
-//                       prevColumns.map((column) =>
-//                         column.id === columnId
-//                           ? {
-//                               ...column,
-//                               items: column.items.filter(
-//                                 (i) => i.id !== item.id
-//                               ),
-//                             }
-//                           : column
-//                       )
-//                     );
-//                   }}
-//                 >
-//                   <X size={14} />
-//                 </ActionIcon>
-//               </div>
-//             )}
-//           </Paper>
-//         </div>
-//       }
-//     >
-//       <EditForm
-//         initialValues={{ text: item.text }}
-//         onSubmit={(data) => {
-//           setOpened(false);
-//           setColumns((prevColumns) =>
-//             prevColumns.map((column) =>
-//               column.id === columnId
-//                 ? {
-//                     ...column,
-//                     items: column.items.map((i) =>
-//                       i.id === item.id ? { ...i, text: data.text } : i
-//                     ),
-//                   }
-//                 : column
-//             )
-//           );
-//         }}
-//       />
-//     </Popover>
-//   );
-// };
-
-// const AddButton = (props) => {
-//   const { columnId, setColumns, nextItemId, setNextItemId } = props;
-//   const [opened, setOpened] = useState(false);
-
-//   return (
-//     <Popover
-//       className="w-full"
-//       opened={opened}
-//       onClose={() => setOpened(false)}
-//       position="bottom"
-//       transition="scale-y"
-//       target={
-//         <div className="m-2 flex justify-center">
-//           <ActionIcon
-//             className="hover:bg-gray-100"
-//             radius={10}
-//             size={40}
-//             onClick={() => setOpened((o) => !o)}
-//           >
-//             <Plus size={20} />
-//           </ActionIcon>
-//         </div>
-//       }
-//     >
-//       <EditForm
-//         initialValues={{ text: "" }}
-//         onSubmit={(data) => {
-//           setNextItemId((id) => id + 1);
-//           setOpened(false);
-//           setColumns((prevColumns) =>
-//             prevColumns.map((column) =>
-//               column.id === columnId
-//                 ? {
-//                     ...column,
-//                     items: [
-//                       ...column.items,
-//                       { id: nextItemId, text: data.text },
-//                     ],
-//                   }
-//                 : column
-//             )
-//           );
-//         }}
-//       />
-//     </Popover>
-//   );
-// };
-
-// const App = () => {
-//   const [columns, setColumns] = useState(initialColumns);
-//   const [nextItemId, setNextItemId] = useState(initialColumns.length + 1);
-
-//   const handleDragEnd = useCallback(
-//     (event) => {
-//       const { active, over } = event;
-//       if (over === null) {
-//         return;
-//       }
-//       if (active.id === over.id) {
-//         console.log(active.id, over.id);
-//         return;
-//       }
-//     },
-//     [columns]
-//   );
-
-//   useEffect(() => {
-//     requestAnimationFrame(() => {
-//       console.log("req");
-//     });
-//   }, [columns]);
-
-//   const handleDragOver = useCallback(
-//     (event) => {
-//       const { active, over } = event;
-
-//       if (!over) {
-//         return;
-//       }
-
-//       const overColumnIndex = columns.findIndex(
-//         (column) => column.items.findIndex((item) => item.id === over.id) !== -1
-//       );
-//       const activeColumnIndex = columns.findIndex(
-//         (column) =>
-//           column.items.findIndex((item) => item.id === active.id) !== -1
-//       );
-
-//       if (
-//         overColumnIndex !== -1 &&
-//         activeColumnIndex !== -1 &&
-//         overColumnIndex !== activeColumnIndex
-//       ) {
-//         setColumns((columns) => {
-//           const newColumns = [...columns];
-//           const overColumn = newColumns[overColumnIndex];
-//           const activeColumn = newColumns[activeColumnIndex];
-
-//           const overItemIndex = overColumn.items.findIndex(
-//             (item) => item.id === over.id
-//           );
-//           const activeItemIndex = activeColumn.items.findIndex(
-//             (item) => item.id === active.id
-//           );
-
-//           console.log(
-//             overItemIndex,
-//             activeItemIndex,
-//             activeColumn,
-//             activeColumn.items[activeItemIndex]
-//           );
-//           overColumn.items.splice(overItemIndex, 0, {
-//             id: active.id,
-//             text: activeColumn.items[activeItemIndex].text,
-//           });
-//           activeColumn.items.splice(activeItemIndex, 1);
-
-//           return newColumns;
-//         });
-//       }
-//     },
-//     [columns]
-//   );
-
-//   useEffect(() => {
-//     console.log(columns);
-//   }, [columns]);
-
-//   return (
-//     <DndContext
-//       onDragEnd={handleDragEnd}
-//       onDragOver={handleDragOver}
-//       measuring={{
-//         droppable: {
-//           strategy: MeasuringStrategy.Always,
-//         },
-//       }}
-//     >
-//       <div className="m-12">
-//         <Grid>
-//           {columns.map((column) => (
-//             <Grid.Col key={column.id} span={4}>
-//               <Paper>
-//                 <Badge
-//                   className="flex justify-center"
-//                   size="lg"
-//                   color={column.color}
-//                 >
-//                   {column.name}
-//                 </Badge>
-//                 <Divider my="sm" variant="dotted" />
-//                 <SortableContext items={column.items}>
-//                   {column.items.map((item) => (
-//                     <KanbanItem
-//                       key={item.id}
-//                       item={item}
-//                       columnId={column.id}
-//                       setColumns={setColumns}
-//                     />
-//                   ))}
-//                 </SortableContext>
-//                 <AddButton
-//                   columnId={column.id}
-//                   setColumns={setColumns}
-//                   nextItemId={nextItemId}
-//                   setNextItemId={setNextItemId}
-//                 />
-//               </Paper>
-//             </Grid.Col>
-//           ))}
-//         </Grid>
-//       </div>
-//     </DndContext>
-//   );
-// };
-
-const App = MultipleContainers;
 export default App;
